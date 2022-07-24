@@ -9,6 +9,8 @@
 #include <cassert>
 #include <sys/epoll.h>
 #include <string.h>
+#include <signal.h>
+#include <bits/signum.h> // 保存着 Linux 的可用信号，包括：标准信号 及 POSIX实时信号
 
 
 #include "./lock/locker.h"
@@ -16,6 +18,52 @@
 #define MAX_FD 65536           // 最大文件描述符
 #define MAX_EVENT_NUMBER 10000 // 最大监听事件数
 #define TIMESLOT 5             // 最小超时单位
+
+
+
+/* --- 设置统一事件源 ---*/
+static int pipefd[2];
+
+// 将文件描述符设置成非阻塞
+int setnonblocking( int fd )
+{
+    int old_option = fcntl( fd, F_GETFL);
+    int new_option = old_option | O_NONBLOCK;
+    fcntl( fd, F_SETFL, new_option);
+    return old_option;
+}
+
+
+
+/* --- 信号处理部分 --- */
+
+// 信号处理函数
+void sig_handler( int sig )
+{
+    // 为保证函数的可重入性，保留原来的 errno
+    int save_errno  = errno;
+    int msg = sig;
+    send( pipefd[1], char(*) &msg, 1, 0); // 发送给事件统一处理
+    errno  = save_errno;
+}
+
+// 设置信号函数
+void addsig( int sig ,void(handler)(int), bool restart = true )
+{
+    // signal 系统调用，用于给信号类型指定一个处理函数, 返回值是之前的信号处理函数
+    // sigaction 是更健壮的接口,同时设置 1）信号处理函数 2）信号掩码
+
+    struct sigaction sa;
+    memset( &sa, '\0', sizeof(sa) );
+    sa.sa_handler = handler;
+    if ( restart )
+    {
+        sa.sa_flags |= SA_RESTART;
+    }
+    sigfillset(&sa.sa_mask);
+    assert( sigaction( sig, &sa, NULL) != -1 );
+    
+}
 
 
 int main( int argc, char **argv)
@@ -49,5 +97,11 @@ int main( int argc, char **argv)
     ret = listen( listenfd, 5 ); // 参数2 backlog： 设置内核监听队列的最大长度
     assert( ret >= 0 );
 
+
+    // 创建事件通知的管道
+    ret = socketpair( PF_UNIX, SOCK_STREAM, 0, pipefd);
+    assert( ret != -1 );
+    setnonblocking( pipefd[1]);
     
+
 }
