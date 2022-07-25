@@ -25,7 +25,7 @@ public:
     client_data* user_data;
     util_timer* prev;
     util_timer* next;
-}
+};
 
 //  定时器容器，其本质为一个升序链表
 class sort_timer_lst
@@ -188,7 +188,7 @@ private:
 private:
     util_timer* head;
     util_timer* tail;
-}
+};
 
 
 #endif
