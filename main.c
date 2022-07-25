@@ -14,6 +14,7 @@
 
 
 #include "./lock/locker.h"
+#include "./threadpoll/threadpoll.h"
 
 #define MAX_FD 65536           // 最大文件描述符
 #define MAX_EVENT_NUMBER 10000 // 最大监听事件数
@@ -77,6 +78,12 @@ int main( int argc, char **argv)
 
     int port = atoi(argv[1]);
 
+    // 读端关闭的socket中再写入数据，会引起默认的 Term 操作，因此这里改成忽略该信号
+    addsig( SIGPIPE, SIG_IGN);
+
+    // 创建线程池
+    
+
     // 注册监听事件描述符
     int listenfd = socket( PF_INET, SOCK_STREAM, 0 );  // 参数1：协议族、 参数2：服务类型（流服务、数据报服务）、参数3：预定的设置，通用写0代表默认配置
     assert( listenfd >= 0);
@@ -102,6 +109,6 @@ int main( int argc, char **argv)
     ret = socketpair( PF_UNIX, SOCK_STREAM, 0, pipefd);
     assert( ret != -1 );
     setnonblocking( pipefd[1]);
-    
+
 
 }
