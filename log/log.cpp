@@ -127,8 +127,9 @@ void Log::write_log(int level , const char* format, ... )
 
     m_mutex.unlock();
 
+    // stdarg.h 中用于获取函数中的可变参数，va_list 是适用于其他三个宏存储信息的类型
     va_list valst;
-    va_start( valst, format);
+    va_start( valst, format); // 第一个参数放存储可变参数的，第二个参数放最后一个传递给函数的已知固定参数
 
     string log_str;
     m_mutex.lock();
@@ -155,7 +156,8 @@ void Log::write_log(int level , const char* format, ... )
         fputs(log_str.c_str(), m_fp);
         m_mutex.unlock();
     }
-
+    
+    // 带有可变参数的函数返回之前，都应该加上这个，否则结果为未定义
     va_end(valst);
 }
 
