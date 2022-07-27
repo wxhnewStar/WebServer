@@ -15,8 +15,6 @@ using namespace std;
 class connection_poll
 {
 public:
-    connection_poll();
-    ~connection_poll();
 
     MYSQL* GetConnection();     // 获取数据库连接
     bool ReleaseConnection(MYSQL*);   // 释放连接
@@ -44,6 +42,12 @@ private:
     string m_user;            // 登录数据库用户名
     string m_password;        // 登录数据库密码
     string m_database_name;   // 使用数据库名 
+
+private:
+    connection_poll();
+    ~connection_poll();
+    connection_poll(const connection_poll&) = delete;
+    connection_poll& operator=(const connection_poll&) = delete;
 };
 
 

@@ -33,6 +33,9 @@ public:
 private:
     Log();
     virtual ~Log();
+    Log(const Log&)  = delete;
+    Log& operator=(const Log&) = delete;
+
     void *async_write_log()
     {
         string single_log;
