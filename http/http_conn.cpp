@@ -14,12 +14,14 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <stdarg.h>
 #include <errno.h>
 #include <sys/wait.h>
 #include <sys/uio.h>
 #include "../lock/locker.h"
+#include "../sqlpoll/sql_connection_poll.h"
 
 
 class http_conn
@@ -81,7 +83,7 @@ public:
     bool write();
     sockadd* get_address()
     {
-        
+
     }
 
 private:
