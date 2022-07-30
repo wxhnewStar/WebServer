@@ -7,13 +7,13 @@
 #include<pthread.h>
 #include "../lock/locker.h"
 
-/* !!!!!! 未添加数据库连接池相关 */
+#include "../sqlpoll/sql_connection_poll.h"
 
 template <typename T>
 class threadpoll
 {
 public:
-    threadpoll( int thread_number = 8, int max_request = 10000 );
+    threadpoll( connection_poll* conn_poll, int thread_number = 8, int max_request = 10000 );
     ~threadpoll();
     bool append( T* request);
 
@@ -30,11 +30,12 @@ private:
     locker m_queuelocker;       // 保护请求队列的互斥锁
     sem m_queuestat;            // 记录请求的信号量
     bool m_stop;                // 是否结束进程
+    connection_poll* m_conn_poll;   // 数据库连接池
 };
 
 template<typename T>
-threadpoll<T>::threadpoll( int thread_number = 8, int max_request = 10000 ) 
-: m_thread_number(thread_number),m_max_requests(max_request), m_threads(NULL), m_stop(false)
+threadpoll<T>::threadpoll( connection_poll* conn_poll,  int thread_number = 8, int max_request = 10000 ) 
+: m_thread_number(thread_number),m_max_requests(max_request), m_threads(NULL), m_stop(false),m_conn_poll(conn_poll)
 {
     if ( thread_number <= 0 || max_request <= 0 )
         throw std::exception();
@@ -108,7 +109,8 @@ void threadpoll<T>::run()
         if ( !request )
             continue;
         
-        /* !!!缺少对于数据库的设置 */
+        // 从连接池中取出一个连接赋给 “新获得线程的请求”
+        connection_RAII mysql_conn(&request->mysql, m_conn_poll);
         request->process();
 
     }
